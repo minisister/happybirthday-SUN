@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday</title>
+    <style>
+        /* นำเข้าฟอนต์สไตล์ Pixel และฟอนต์ไทยที่เข้ากัน */
+        @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600&family=VT323&display=swap');
+
+        :root {
+            --bg-pastel: #FFF0F5;
+            --pink-pixel: #FFADC6;
+            --pink-dark: #FF6B8B;
+            --blue-pixel: #A8E6CF;
+            --yellow-pixel: #FFD3B6;
+            --purple-pixel: #DCEDC1;
+            --magic-purple: #D1B3FF;
+            --text-dark: #4A3E4D;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Chakra Petch', sans-serif;
+            /* ปิดความมน ปรับให้หยักๆ สไตล์ Pixel */
+            image-rendering: pixelated;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #FFE5EC 0%, #F0E6FF 50%, #E8F0FE 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-dark);
+        }
+
+        /* --- เอฟเฟกต์ประกายเวทย์มนต์ Pixel Stars --- */
+        .magic-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .pixel-star {
+            position: absolute;
+            bottom: -50px;
+            font-family: 'VT323', monospace;
+            font-size: 24px;
+            user-select: none;
+            animation: floatUp 10s infinite linear;
+            opacity: 0.8;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(1); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-120vh) scale(1.2); opacity: 0; }
+        }
+
+        /* กรอบพื้นที่เล่นเกม */
+        #game-container {
+            width: 100%;
+            height: 320px;
+            background: #2A2438; /* สีพื้นหลังห้องมืดๆ */
+            border: 4px solid var(--text-dark);
+            position: relative;
+            overflow: hidden;
+            cursor: crosshair; /* เปลี่ยนเมาส์เป็นเป้าเล็ง */
+            margin: 15px 0;
+        }
+
+        /* แถบแสดงคะแนนและเวลาด้านบน */
+        .game-ui {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 10px;
+            background: rgba(0,0,0,0.4);
+            color: #FFF;
+            font-family: 'VT323', monospace;
+            font-size: 1.5rem;
+            position: absolute;
+            top: 0; left: 0; width: 100%;
+            z-index: 20;
+            border-bottom: 2px solid var(--text-dark);
+        }
+
+        /* ตัวละครคทาเวทมนตร์ */
+        #player-chara {
+            position: absolute;
+            bottom: 10px; left: 50%;
+            transform: translateX(-50%);
+            font-size: 2.5rem;
+            z-index: 15;
+            pointer-events: none;
+            transition: left 0.1s ease-out;
+        }
+
+        /* มอนสเตอร์ตัวร้าย */
+        .monster {
+            position: absolute;
+            font-size: 2rem;
+            z-index: 12;
+            user-select: none;
+        }
+
+        /* กระสุนหัวใจพิกเซล */
+        .bullet {
+            position: absolute;
+            font-size: 1.2rem;
+            z-index: 11;
+            pointer-events: none;
+        }
+
+        /* หน้าต่างเมนูทับเกม (ฉาก Start / ฉากแพ้-ชนะ) */
+        .game-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(42, 36, 56, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 30;
+            padding: 20px;
+        }
+
+        /* เอฟเฟกต์ตัวอักษร Happy Birthday กระพริบตอนชนะ */
+        .hbd-flash {
+            font-family: 'VT323', monospace;
+            font-size: 3rem;
+            color: #FFEB3B;
+            text-shadow: 3px 3px 0 #FF5722;
+            animation: flashText 0.4s infinite alternate steps(2);
+            text-align: center;
+        }
+
+        @keyframes flashText {
+            0% { opacity: 0.2; transform: scale(0.95); }
+            100% { opacity: 1; transform: scale(1.05); }
+        }
+
+        /* --- กล่องข้อความสไตล์เกม RPG (Pixel Card) --- */
+        .main-card {
+            background: #FFFFFF;
+            /* ทำขอบสองชั้นแบบหน้าต่างเกมย้อนยุค */
+            border: 4px solid var(--text-dark);
+            box-shadow: 
+                0 0 0 4px #FFFFFF, 
+                0 0 0 8px var(--pink-pixel),
+                8px 12px 0px rgba(0, 0, 0, 0.15);
+            padding: 40px 30px;
+            width: 90%;
+            max-width: 460px;
+            text-align: center;
+            z-index: 10;
+            position: relative;
+        }
+
+        h1.title {
+            font-family: 'VT323', monospace;
+            font-size: 3.5rem;
+            margin: 0 0 10px 0;
+            color: var(--pink-dark);
+            text-shadow: 3px 3px 0px var(--yellow-pixel), 5px 5px 0px var(--text-dark);
+            letter-spacing: 2px;
+        }
+
+        p.subtitle {
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        /* --- การเปลี่ยนหน้าอนิเมชันสไตล์ 8-bit --- */
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+            animation: pixelAppear 0.3s steps(4) forwards;
+        }
+
+        @keyframes pixelAppear {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* --- ปุ่มกดสไตล์ Pixel (Retro Buttons) --- */
+        .btn-group {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: 3px solid var(--text-dark);
+            border-radius: 0; /* ปุ่มเหลี่ยมพิกเซล */
+            cursor: pointer;
+            position: relative;
+            box-shadow: 4px 4px 0px var(--text-dark);
+            transition: all 0.1s;
+        }
+
+        .btn:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0px 0px 0px var(--text-dark);
+        }
+
+        .btn-primary { background-color: var(--pink-pixel); color: var(--text-dark); }
+        .btn-primary:hover { background-color: #FFC2D4; }
+        
+        .btn-secondary { background-color: #B5E2FA; color: var(--text-dark); }
+        .btn-secondary:hover { background-color: #CBEBFC; }
+
+        .btn-accent { background-color: var(--magic-purple); color: var(--text-dark); }
+        .btn-accent:hover { background-color: #E2CFFF; }
+
+        /* --- ไอเทมอนิเมชันคทา/กล่องของขวัญ --- */
+        .gift-container {
+            font-size: 4.5rem;
+            margin: 20px 0;
+            animation: pixelBounce 1.5s infinite steps(4);
+        }
+
+        @keyframes pixelBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+
+        /* --- กล่องจดหมายอวยพรสไตล์ Text Box ในเกม --- */
+        .letter-note {
+            background-color: #FFFDF3;
+            padding: 20px;
+            border: 3px dashed var(--pink-dark);
+            text-align: left;
+            line-height: 1.6;
+            font-size: 1rem;
+            box-shadow: inset 3px 3px 0px rgba(0,0,0,0.05);
+        }
+
+        /* --- Meme Space --- */
+        .meme-gif {
+            width: 100%;            
+            max-width: 180px;       
+            height: auto;           
+            border-radius: 15px;   
+            margin: 15px auto;      
+            display: block; 
+        }
+
+        /* --- กรอบวิดีโอเพลงเวทย์มนต์ --- */
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            border: 4px solid var(--text-dark);
+            overflow: hidden;
+            background: #FFF;
+            margin: 20px 0;
+            box-shadow: 4px 4px 0px var(--text-dark);
+        }
+
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            border: 0;
+        }
+
+        /* หน้าปกกล่องดนตรีเวทย์มนต์ */
+        .video-cover {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #FFEBEF 0%, #E8D7FF 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 5;
+            cursor: pointer;
+            transition: opacity 0.3s;
+            padding: 20px;
+        }
+
+        .video-cover .music-icon {
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+            animation: pixelPulse 1.2s infinite steps(3);
+        }
+
+        @keyframes pixelPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .video-wrapper.playing .video-cover {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .message-box {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            background: #FFF8FA;
+            padding: 15px;
+            border-left: 5px solid var(--pink-dark);
+            border-bottom: 2px solid rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        /* --- เอฟเฟกต์โปรยสี่เหลี่ยมพิกเซล (Pixel Confetti) --- */
+        .confetti {
+            position: fixed;
+            width: 8px;
+            height: 8px; /* บังคับให้เป็นสี่เหลี่ยมจัตุรัสพิกเซล */
+            top: -10px;
+            z-index: 999;
+            animation: fall linear forwards;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(105vh) rotate(0deg); /* ตกแบบไม่หมุนพริ้ว เพื่อคงฟีล 8-bit */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="magic-container" id="magicContainer"></div>
+
+    <div class="main-card">
+        
+        <div id="pageGame" class="page active">
+            <h1 class="title">BIRTHDAY MISSION!</h1>
+            <p style="font-weight: 600; font-size: 0.95rem; margin: 0 0 10px 0;"> 🪄คุณต้องกำจัดมอนสเตอร์ให้ได้ภายใน 1 นาที เพื่อเปิดรับของขวัญวันเกิดที่สุดแสนจะน่ารัก✨</p>
+            
+            <div id="game-container">
+                <div class="game-ui">
+                    <div>SCORE: <span id="score-txt">0</span>/99</div>
+                    <div>TIME: <span id="time-txt">60</span>s</div>
+                </div>
+
+                <div id="player-chara">🪄</div>
+
+                <div id="game-overlay" class="game-overlay">
+                    <p id="overlay-msg">ถ้าพร้อมแล้วกดปุ่มStart Gameได้เยย✨</p>
+                    <button class="btn btn-primary" onclick="startGame()">START GAME 🎮</button>
+                </div>
+            </div>
+            <p style="font-size: 0.8rem; color: #888; margin: 0;">(วิธีเล่น: เลื่อนเมาส์/ลากนิ้วบนจอมือถือเพื่อขยับคฑา และกดคลิก/แตะเพื่อยิงเวทย์)</p>
+        </div>
+        
+        <div id="page1" class="page">
+            <h1 class="title">HAPPY BIRTHDAY</h1>
+            <p class="subtitle">ยินดีด้วยคุณได้รับของขวัญสุดพิเศษ🪄</p>
+            <div class="gift-container">🎁✨</div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="navigateTo('pageWishes')">กดเปิดเลย 🌟</button>
+                <button class="btn btn-secondary" onclick="navigateTo('pageMeme')">โยนทิ้ง</button>
+            </div>
+        </div>
+
+        <div id="pageMeme" class="page">
+            <h1 class="title">HAPPY BIRTHDAY</h1>
+            <img src="https://media.giphy.com/media/Rl6TvAg4JAWAM/giphy.gif" class="meme-gif" alt="Meme GIF">
+            <p class="subtitle" style="color: var(--pink-dark);">
+                จะไม่เปิดจริงๆหยออ ให้โอกาสอีกรอบ ครั้งนี้ช่วยกดแรงๆหน่อยนะคะ อยากโดนกด🫣
+            </p>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="navigateTo('pageWishes')">ยอมกดก็ได้💖</button>
+            </div>
+        </div>
+
+        <div id="pageWishes" class="page">
+            <h1 class="title">HAPPY BIRTHDAY</h1>
+            <p class="subtitle">🪄โอม มะลึกกึกกึ๋ยเพี้ยง!✨</p>
+            <div class="letter-note">
+                 <b>Happy Birthdayนะคั้บบ🎂🎉</b><br>
+                วันเกิดปีนี้มีบีมด้วยแหละ ฮิฮิ ขอให้ซันเติบโตขึ้นอย่างมีความสุขในทุกๆวัน ประสบความสำเร็จในทุกสิ่งที่อยากทำ รักตัวเองให้เยอะๆและเชื่อมั่นในตัวเองด้วยนะ ซันเก่งมากๆเลยยชมตัวเองเยอะๆนะคั้บ บีมจะคอยซัพพอร์ตและอยู่ข้างๆ(คอยป่วน😜)เสมอ🫶🏻💕 
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-accent" onclick="navigateTo('pageMusic')">มีอีกๆ กดดูสิ</button>
+            </div>
+        </div>
+
+        <div id="pageMusic" class="page">
+            <h1 class="title">HAPPY BIRTHDAY</h1>
+            <div class="message-box">
+                💌 <b>ของขวัญสุดพิเศษ มอบให้คนพิเศษ:</b><br>
+                มาส่งเพลงน่ารักๆ ให้เจ้าของวันเกิดฟัง ขอบคุณที่เติบโตมาเป็นอย่างดีนะคั้บ🫳🏻 ขอให้เพลงนี้เป็นเพลงที่เมื่อไหร่ที่เปิดฟังก็จะมีแต่สิ่งดีๆ พลังงานดีๆ ขอให้เป็นวันที่อบอุ่นและสดใสเหมือนชื่อน้องซัน☀️🌈
+            </div>
+
+            <div class="video-wrapper" id="videoWrapper">
+                <div class="video-cover" onclick="startPlayMusic()">
+                    <div class="music-icon">🔮✨</div>
+                    <button class="btn btn-primary" style="box-shadow: 3px 3px 0 #000;">
+                        กดแรงๆเพื่อฟังเพลง
+                    </button>
+                </div>
+
+                <div class="video-container">
+                    <iframe id="youtube-player" src="https://www.youtube.com/embed/EE7bDvbu6ko?enablejsapi=1&rel=0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const gameContainer = document.getElementById('game-container');
+        const player = document.getElementById('player-chara');
+        const scoreTxt = document.getElementById('score-txt');
+        const timeTxt = document.getElementById('time-txt');
+        const gameOverlay = document.getElementById('game-overlay');
+
+        let score = 0;
+        let timeLeft = 60;
+        let gameActive = false;
+        let spawnInterval, gameTimer;
+        const targetScore = 66; 
+
+        // 1. ระบบขยับคทาตามเมาส์/นิ้วลาก
+        gameContainer.addEventListener('mousemove', (e) => {
+            if (!gameActive) return;
+            const rect = gameContainer.getBoundingClientRect();
+            let x = e.clientX - rect.left;
+            if(x < 20) x = 20;
+            if(x > rect.width - 20) x = rect.width - 20;
+            player.style.left = x + 'px';
+        });
+        gameContainer.addEventListener('touchmove', (e) => {
+            if (!gameActive) return;
+            const rect = gameContainer.getBoundingClientRect();
+            let x = e.touches[0].clientX - rect.left;
+            if(x < 20) x = 20;
+            if(x > rect.width - 20) x = rect.width - 20;
+            player.style.left = x + 'px';
+        });
+
+        // 2. ระบบคลิก/แตะ เพื่อยิงกระสุน
+        gameContainer.addEventListener('click', (e) => {
+            if (!gameActive || e.target.classList.contains('monster')) return;
+            fireBullet();
+        });
+        gameContainer.addEventListener('touchstart', (e) => {
+            if (!gameActive) return;
+            fireBullet();
+        });
+
+        // 3. ฟังก์ชันเริ่มเกม
+        function startGame() {
+            score = 0; timeLeft = 60;
+            scoreTxt.innerText = score; timeTxt.innerText = timeLeft;
+            gameActive = true;
+            gameOverlay.style.display = 'none';
+            document.querySelectorAll('.monster').forEach(m => m.remove());
+
+            gameTimer = setInterval(() => {
+                timeLeft--;
+                timeTxt.innerText = timeLeft;
+                if (timeLeft <= 0) endGame(false);
+            }, 1000);
+
+            spawnInterval = setInterval(spawnMonster, 600);
+        }
+
+        // 4. ฟังก์ชันการยิงและเช็คการชน
+        function fireBullet() {
+            const bullet = document.createElement('div');
+            bullet.classList.add('bullet');
+            bullet.innerText = '💖'; 
+            
+            const playerLeft = parseFloat(player.style.left) || (gameContainer.offsetWidth / 2);
+            bullet.style.left = (playerLeft - 10) + 'px';
+            bullet.style.bottom = '40px';
+            gameContainer.appendChild(bullet);
+
+            let bulletPos = 40;
+            let bulletTick = setInterval(() => {
+                if(!gameActive) { clearInterval(bulletTick); bullet.remove(); return; }
+                bulletPos += 7; 
+                bullet.style.bottom = bulletPos + 'px';
+
+                document.querySelectorAll('.monster').forEach(monster => {
+                    if (isColliding(bullet, monster)) {
+                        monster.innerText = '✨'; 
+                        monster.style.pointerEvents = 'none';
+                        clearInterval(bulletTick);
+                        bullet.remove();
+                        setTimeout(() => monster.remove(), 150);
+                        
+                        score++;
+                        scoreTxt.innerText = score;
+                        if (score >= targetScore) endGame(true); 
+                    }
+                });
+
+                if (bulletPos > 320) { clearInterval(bulletTick); bullet.remove(); }
+            }, 10);
+        }
+
+        // 5. ฟังก์ชันสร้างมอนสเตอร์สุ่มตำแหน่ง
+        function spawnMonster() {
+            if (!gameActive) return;
+            const monster = document.createElement('div');
+            monster.classList.add('monster');
+            
+            const monsterIcons = ['👾', '👻', '😈', '🎃', '👁️']; 
+            monster.innerText = monsterIcons[Math.floor(Math.random() * monsterIcons.length)];
+            
+            const maxW = gameContainer.offsetWidth - 30;
+            monster.style.left = Math.floor(Math.random() * maxW) + 'px';
+            monster.style.top = '30px';
+            gameContainer.appendChild(monster);
+
+            let monsterPos = 30;
+            let fallSpeed = Math.random() * 1.5 + 1.5; 
+
+            let monsterTick = setInterval(() => {
+                if(!gameActive) { clearInterval(monsterTick); monster.remove(); return; }
+                monsterPos += fallSpeed;
+                monster.style.top = monsterPos + 'px';
+                if (monsterPos > 280) { clearInterval(monsterTick); monster.remove(); }
+            }, 20);
+        }
+
+        // 6. ฟังก์ชันคำนวณกล่องชนกัน (Hitbox)
+        function isColliding(a, b) {
+            let aRect = a.getBoundingClientRect();
+            let bRect = b.getBoundingClientRect();
+            return !((aRect.top + aRect.height < bRect.top) || (aRect.top > bRect.top + bRect.height) || (aRect.left + aRect.width < bRect.left) || (aRect.left > bRect.left + bRect.width));
+        }
+
+        // 7. ฟังก์ชันจบเกม (แก้จุดนี้ตามรีเควส: ขึ้น HBD กระพริบก่อน แล้วสลับหน้าอัตโนมัติ)
+        function endGame(isWin) {
+            gameActive = false;
+            clearInterval(gameTimer);
+            clearInterval(spawnInterval);
+            gameOverlay.style.display = 'flex';
+            
+            if (isWin) {
+                // เอฟเฟกต์เด้งขึ้นโชว์ Happy Birthday แบบกระพริบเต็มกรอบเกมก่อน
+                gameOverlay.innerHTML = `
+                    <div class="hbd-flash">HAPPY BIRTHDAY<br>TO SUN ✨</div>
+                    <p style="margin-top:15px; color:#FFF; font-weight:600;">MISSION COMPLETE! 🎉</p>
+                `;
+                // ทิ้งหน้าจอ HBD ไว้ 2.5 วินาที แล้วทำการเฟดสลับตัวเว็บเข้าสู่หน้าของขวัญ (page1) ทันที
+                setTimeout(() => {
+                    navigateTo('page1'); 
+                    createPixelConfetti(); // จุดพลุกระดาษเฉลองพิกเซลร่วงลงมาคั้บ
+                }, 2500); 
+            } else {
+                gameOverlay.innerHTML = `
+                    <p id="overlay-msg">ง่าาา เวลาหมดซะก่อนคั้บคุณซัน! ลองใหม่อีกทีน้าา 🥺</p>
+                    <button class="btn btn-primary" onclick="startGame()">RETRY GAME 🔄</button>
+                `;
+            }
+        }
+        
+        // --- ระบบเปลี่ยนหน้าเว็บ ---
+        function navigateTo(pageId) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        // --- ระบบสร้างประกายเวทย์มนต์พื้นหลัง ---
+        const magicIcons = ['✦', '✧', '♥', '★', '♦'];
+        const colors = ['#FFADC6', '#B5E2FA', '#FFD3B6', '#DCEDC1', '#D1B3FF', '#FFFFFF']; 
+        const magicContainer = document.getElementById('magicContainer');
+
+        function createMagicParticle() {
+            const particle = document.createElement('div');
+            particle.classList.add('pixel-star');
+            
+            particle.innerText = magicIcons[Math.floor(Math.random() * magicIcons.length)];
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            const randomLeft = Math.random() * 100;
+            const randomDuration = Math.random() * (12 - 7) + 7;
+
+            particle.style.left = `${randomLeft}vw`;
+            particle.style.color = randomColor; 
+            particle.style.animationDuration = `${randomDuration}s`;
+            
+            magicContainer.appendChild(particle);
+            setTimeout(() => { particle.remove(); }, randomDuration * 1000);
+        }
+
+        setInterval(createMagicParticle, 800);
+        for(let i=0; i<8; i++) { setTimeout(createMagicParticle, i * 200); }
+
+        // --- ระบบเล่นเพลง และ ปล่อยเศษพิกเซลโปรย (Pixel Confetti) ---
+        function startPlayMusic() {
+            document.getElementById('videoWrapper').classList.add('playing');
+            const iframe = document.getElementById('youtube-player');
+            iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+            createPixelConfetti();
+        }
+
+        function createPixelConfetti() {
+            const confettiColors = ['#FFADC6', '#B5E2FA', '#FFD3B6', '#DCEDC1', '#FFFFFF'];
+            
+            for (let i = 0; i < 70; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.classList.add('confetti');
+                    
+                    const randomColor = confettiColors[Math.floor(Math.random() * confettiColors.length)];
+                    confetti.style.backgroundColor = randomColor;
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    
+                    const pixelSize = Math.floor(Math.random() * 6) + 6; 
+                    confetti.style.width = pixelSize + 'px';
+                    confetti.style.height = pixelSize + 'px';
+                    
+                    confetti.style.animationDuration = (Math.random() * 2.5 + 1.5) + 's';
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => { confetti.remove(); }, 4000);
+                }, i * 40); 
+            }
+        }
+    </script>
+</body>
+</html>
